@@ -20,13 +20,9 @@ type WavFile struct {
 }
 
 func (w *WavFile) fillFmt(r io.Reader) error {
-	buf := make([]byte, 36)
-	n, err := r.Read(buf)
+	buf, err := fullRead(r, 36)
 	if err != nil {
 		return err
-	}
-	if n < 36 {
-		return errors.New("incomplete wav")
 	}
 	if !eql(buf[:4], "RIFF") {
 		return errors.New("missing RIFF")
@@ -57,41 +53,29 @@ func (w *WavFile) fillFmt(r io.Reader) error {
 }
 
 func readUntilFindData(r io.Reader) (int, error) {
-	buf := make([]byte, 8)
+	var dataSize int
 	for {
-		n, err := r.Read(buf)
+		buf, err := fullRead(r, 8)
 		if err != nil {
 			return 0, err
 		}
-		if n < 8 {
-			return 0, errors.New("incomplete wav")
-		}
-
+		dataSize = toNum(buf[4:8])
 		if !eql(buf[0:4], "data") {
-			size := toNum(buf[4:8])
-			trash := make([]byte, size)
-			n, err := r.Read(trash)
+			_, err := fullRead(r, dataSize)
 			if err != nil {
 				return 0, err
-			}
-			if n < size {
-				return 0, errors.New("incomplete wav")
 			}
 		} else {
 			break
 		}
 	}
-	return toNum(buf[4:8]), nil
+	return dataSize, nil
 }
 
 func (w *WavFile) fillData(r io.Reader) error {
-	buf := make([]byte, w.DataSize)
-	n, err := r.Read(buf)
+	buf, err := fullRead(r, w.DataSize)
 	if err != nil {
 		return err
-	}
-	if n < w.DataSize {
-		return errors.New("incomplete wav")
 	}
 	for i := 0; i < w.SampleCount; i++ {
 		tmp := make([]int, w.NumChannels)
@@ -130,6 +114,18 @@ func toNum(p []byte) int {
 
 func eql(raw []byte, cmp string) bool {
 	return bytes.Equal(raw, []byte(cmp))
+}
+
+func fullRead(r io.Reader, size int) ([]byte, error) {
+	buf := make([]byte, size)
+	n, err := r.Read(buf)
+	if err != nil {
+		return nil, err
+	}
+	if n < size {
+		return nil, errors.New("incomplete stream")
+	}
+	return buf, nil
 }
 
 func LoadWav(r io.Reader) (*WavFile, error) {
