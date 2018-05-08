@@ -33,6 +33,9 @@ func (w *WavFile) fillFmt(r io.Reader) error {
 	if !eql(buf[12:16], "fmt ") {
 		return errors.New("missing fmt")
 	}
+	if toNum(buf[16:20]) != 16 {
+		return errors.New("unsupported fmt size")
+	}
 	w.AudioFormat = toNum(buf[20:22])
 	if w.AudioFormat != 1 {
 		return errors.New("unsupported audio format")
