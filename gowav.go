@@ -103,7 +103,7 @@ func (w *WavFile) String() string {
 		w.BlockAlign,
 		w.BitsPerSample,
 		w.SampleCount,
-		w.Samples[0:10])
+		w.Samples[:10])
 }
 
 func toNum(p []byte) int {
@@ -138,7 +138,7 @@ func LoadWav(r io.Reader) (*WavFile, error) {
 		return nil, err
 	}
 
-	w.fillData(r)
+	err = w.fillData(r)
 	if err != nil {
 		return nil, err
 	}
