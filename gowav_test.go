@@ -19,11 +19,12 @@ func Show(filename string) error {
 	return nil
 }
 
-func Test_Show(t *testing.T) {
-	err := Show("/Users/wallacegibbon/o.wav")
+func Test_Show_1(t *testing.T) {
+	err := Show("./frog.wav")
 	if err != nil {
 		t.Error("Failed", err)
 	} else {
 		t.Log("Succeed")
 	}
 }
+
