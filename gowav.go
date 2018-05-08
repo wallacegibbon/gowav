@@ -76,9 +76,16 @@ func (w *WavFile) fillData(r io.Reader) error {
 }
 
 func (w *WavFile) String() string {
-	return fmt.Sprintf("[AudioFormat:%d,NumChannels:%d,SampleRate:%d,ByteRate:%d,BlockAlign:%d,BitsPerSample:%d,SampleCount:%d]%v",
-		w.AudioFormat, w.NumChannels, w.SampleRate, w.ByteRate,
-		w.BlockAlign, w.BitsPerSample, w.SampleCount,
+	return fmt.Sprintf("[AudioFormat:%d,NumChannels:%d,SampleRate:%d,"+
+		"ByteRate:%d,BlockAlign:%d,BitsPerSample:%d,"+
+		"SampleCount:%d]%v",
+		w.AudioFormat,
+		w.NumChannels,
+		w.SampleRate,
+		w.ByteRate,
+		w.BlockAlign,
+		w.BitsPerSample,
+		w.SampleCount,
 		w.Samples[0:10])
 }
 
