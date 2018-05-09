@@ -56,9 +56,13 @@ func LoadDump(infile, outfile string) error {
 	for {
 		frm, err := w.GetFrame()
 		if err != nil {
-			return nil
+			return err
 		}
-		out.Write(frm)
+		if frm != nil {
+			out.Write(frm)
+		} else {
+			break
+		}
 	}
 	return nil
 }

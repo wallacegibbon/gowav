@@ -96,7 +96,15 @@ func (w *WavFile) read(size int) ([]byte, error) {
 }
 
 func (w *WavFile) GetFrame() ([]byte, error) {
-	return w.read(w.BlockAlign)
+	d, err := w.read(w.BlockAlign)
+	if err != nil {
+		if err == io.EOF {
+			return nil, nil
+		} else {
+			return nil, err
+		}
+	}
+	return d, nil
 }
 
 func (w *WavFile) String() string {
