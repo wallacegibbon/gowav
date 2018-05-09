@@ -75,6 +75,10 @@ func readUntilFindData(r io.Reader) (int, error) {
 	return dataSize, nil
 }
 
+func eql(raw []byte, cmp string) bool {
+	return bytes.Equal(raw, []byte(cmp))
+}
+
 func (w *WavFile) fillData(r io.Reader) error {
 	buf, err := fullRead(r, w.DataSize)
 	if err != nil {
@@ -106,6 +110,55 @@ func (w *WavFile) String() string {
 		w.Samples[:10])
 }
 
+func (w *WavFile) Dump(out io.Writer) error {
+	dsize := w.BlockAlign * w.SampleCount
+	fsize := dsize + 44 - 8
+	buf := make([]byte, 44)
+	copy(buf[0:4], []byte("RIFF"))
+	copy(buf[4:8], toBytes(fsize, 4))
+	copy(buf[8:16], []byte("WAVEfmt "))
+	copy(buf[16:20], []byte{0x10, 0, 0, 0})
+	copy(buf[20:22], toBytes(w.AudioFormat, 2))
+	copy(buf[22:24], toBytes(w.NumChannels, 2))
+	copy(buf[24:28], toBytes(w.SampleRate, 2))
+	copy(buf[28:32], toBytes(w.ByteRate, 2))
+	copy(buf[32:34], toBytes(w.BlockAlign, 2))
+	copy(buf[34:36], toBytes(w.BitsPerSample, 2))
+	copy(buf[36:40], []byte("data"))
+	copy(buf[40:44], toBytes(dsize, 4))
+	_, err := out.Write(buf)
+	if err != nil {
+		return err
+	}
+
+	if len(w.Samples) != w.SampleCount {
+		return errors.New("Samples length and SampleCount mismatch")
+	}
+	for i := 0; i < w.SampleCount; i++ {
+		for n := 0; n < w.NumChannels; n++ {
+			sampleBytes := w.BitsPerSample / 8
+			if len(w.Samples[i]) != w.NumChannels {
+				return errors.New("NumChannels error")
+			}
+			_, err := out.Write(
+				toBytes(w.Samples[i][n], sampleBytes))
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func toBytes(num, size int) []byte {
+	r := make([]byte, size)
+	for i := 0; i < size; i++ {
+		r[i] = byte(num & 0xff)
+		num >>= 8
+	}
+	return r
+}
+
 func toNum(p []byte) int {
 	var r int
 	for i := len(p) - 1; i >= 0; i-- {
@@ -113,10 +166,6 @@ func toNum(p []byte) int {
 		r += int(p[i])
 	}
 	return r
-}
-
-func eql(raw []byte, cmp string) bool {
-	return bytes.Equal(raw, []byte(cmp))
 }
 
 func fullRead(r io.Reader, size int) ([]byte, error) {
@@ -142,6 +191,5 @@ func LoadWav(r io.Reader) (*WavFile, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	return &w, nil
 }
