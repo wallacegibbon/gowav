@@ -1,6 +1,7 @@
 package gowav
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"testing"
@@ -12,11 +13,16 @@ func Load(filename string) error {
 		return err
 	}
 	defer f.Close()
-	w, err := LoadWav(f)
+	w, err := NewWav(f)
 	if err != nil {
 		return err
 	}
 	fmt.Println(w)
+	frm, err := w.GetFrame()
+	if err != nil {
+		return errors.New("GetFrame failed " + err.Error())
+	}
+	fmt.Println(frm)
 	return nil
 }
 
@@ -41,13 +47,18 @@ func LoadDump(infile, outfile string) error {
 	}
 	defer out.Close()
 
-	w, err := LoadWav(in)
+	w, err := NewWav(in)
 	if err != nil {
 		return err
 	}
-	err = w.Dump(out)
-	if err != nil {
-		return err
+
+	w.WriteParams(out)
+	for {
+		frm, err := w.GetFrame()
+		if err != nil {
+			return nil
+		}
+		out.Write(frm)
 	}
 	return nil
 }
