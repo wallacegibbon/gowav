@@ -10,6 +10,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"os"
 )
 
 type WavFile struct {
@@ -107,6 +108,18 @@ func (w *WavFile) GetFrame() ([]byte, error) {
 	return d, nil
 }
 
+func (w *WavFile) GetAllFrames() ([]byte, error) {
+	d, err := w.read(w.SampleCount * w.BlockAlign)
+	if err != nil {
+		if err == io.EOF {
+			return nil, nil
+		} else {
+			return nil, err
+		}
+	}
+	return d, nil
+}
+
 func (w *WavFile) String() string {
 	return fmt.Sprintf(
 		"[AudioFormat:%d,NumChannels:%d,SampleRate:%d,"+
@@ -140,6 +153,14 @@ func (w *WavFile) WriteParams(out io.Writer) error {
 	return err
 }
 
+func (w *WavFile) Close() error {
+	x, ok := w.stream.(*os.File)
+	if ok {
+		return x.Close()
+	}
+	return nil
+}
+
 func toBytes(num, size int) []byte {
 	r := make([]byte, size)
 	for i := 0; i < size; i++ {
@@ -166,8 +187,17 @@ func NewWav(r io.Reader) (*WavFile, error) {
 	w := WavFile{stream: r}
 	err := w.GetParams()
 	if err != nil {
+		w.Close()
 		return nil, err
 	}
 
 	return &w, nil
+}
+
+func NewWavFile(filename string) (*WavFile, error) {
+	f, err := os.Open(filename)
+	if err != nil {
+		return nil, err
+	}
+	return NewWav(f)
 }
