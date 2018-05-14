@@ -110,13 +110,15 @@ func (w *WavFile) GetFrame() ([]byte, error) {
 func (w *WavFile) String() string {
 	return fmt.Sprintf(
 		"[AudioFormat:%d,NumChannels:%d,SampleRate:%d,"+
-			"ByteRate:%d,BlockAlign:%d,BitsPerSample:%d]",
+			"ByteRate:%d,BlockAlign:%d,BitsPerSample:%d,"+
+			"SampleCount:%d]",
 		w.AudioFormat,
 		w.NumChannels,
 		w.SampleRate,
 		w.ByteRate,
 		w.BlockAlign,
-		w.BitsPerSample)
+		w.BitsPerSample,
+		w.SampleCount)
 }
 
 func (w *WavFile) WriteParams(out io.Writer) error {
